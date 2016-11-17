@@ -1,0 +1,76 @@
+<launch>
+<node pkg="tf" type="static_transform_publisher" name="zed_hokuyo" args="0 0 0 0 0 0 1 /ZED_left_camera /laser 100" />
+<node pkg="tf" type="static_transform_publisher" name="zed_kinect" args="0 0 0 0 0 0 1 /ZED_left_camera /camera_link 100" />
+<node pkg="urg_node" type="urg_node" name="Hokuyo">
+  <param name="ip_address" value="192.168.0.10" />
+</node>
+<arg name="svo_file" default=""/>
+<arg name="zed_id" default="0"/>
+<group ns="zed">
+  <remap from="depth/depth_registered" to="depth/image_raw" />
+  <remap from="point_cloud/cloud_registered" to="cloud_in" />
+  <include file="$(find zed_wrapper)/launch/zed_camera.launch">
+    <arg name="svo_file" value="$(arg svo_file)" />
+    <arg name="zed_id" value="$(arg zed_id)" />
+    <!-- <remap from="/zed/point_cloud/cloud_registered" to="cloud_in" /> -->
+
+    <!-- <remap from="depth/depth_registered" to="depth/image_raw" /> -->
+  </include>
+</group>
+
+<!-- <node ns="zed" pkg="depthimage_to_laserscan" name="zed_to_laserscan" type="depthimage_to_laserscan" output="screen">
+  <remap from="/zed/depth/depth_registered" to="/camera/depth/image_raw"/>
+  <remap from="/zed/depth/camera_info" to="/camera/depth/camera_info" />
+
+</node> -->
+
+<!-- run pointcloud_to_laserscan node -->
+<!-- <node ns="zed" pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">-->
+
+    <!-- <remap from="cloud_in" to="depth/points"/> -->
+    <!-- <remap from="scan" to="$scan"/> -->
+    <!-- <rosparam>
+        target_frame: camera_link # Leave disabled to output scan in pointcloud frame
+        transform_tolerance: 0.01
+        min_height: 0.0
+        max_height: 1.0
+
+        angle_min: -1.232 # -M_PI/2
+        angle_max: 1.232 # M_PI/2
+        angle_increment: 0.087 # M_PI/360.0
+        scan_time: 0.3333
+        range_min: 0.45
+        range_max: 10.0
+        use_inf: true
+
+        # Concurrency level, affects number of pointclouds queued for processing and number of threads used
+        # 0 : Detect number of cores
+        # 1 : Single threaded
+        # 2->inf : Parallelism level
+        concurrency_level: 1
+    </rosparam>
+</node> -->
+
+
+
+
+<!-- <include file="$(find freenect_launch)/launch/freenect.launch" >
+  <remap from="camera/depth/points" to="cloud_in" />
+</include> -->
+
+
+
+<arg name="camera" default="camera" />
+
+<!-- start sensor-->
+<!-- <include file="$(find openni2_launch)/launch/openni2.launch"> -->
+<include file="$(find freenect_launch)/launch/freenect.launch" >
+    <arg name="camera" default="$(arg camera)"/>
+</include>
+
+<node ns="camera" pkg="depthimage_to_laserscan" name="kinect_to_laserscan" type="depthimage_to_laserscan" output="screen">
+  <remap from="image" to="depth/image_raw"/>
+</node>
+
+<node pkg="rviz" type="rviz"  name="rviz" args="$(find sensor_fusion)/rviz/config.rviz" />
+</launch>
